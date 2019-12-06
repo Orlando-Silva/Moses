@@ -1,57 +1,26 @@
 const banking = require('banking');
-const ofx = require('ofx');
-const fs = require('fs');
-const async = require('async');
-
-var argv = require('yargs')
-    .usage('Usage: -f [input file]')
+const partitionMaker = require('./partitionMaker.js');
+const ofxWriter = require('./ofxWriter.js');
+const argv = require('yargs')
+    .usage('usage: -f [The OFX file that will be partitioned] -m [Max entries per partition] -o [The output folder where the partitions will be saved]')
     .help('help')
     .alias('f', 'file')
-    .describe('f', 'The ofx file to partitionate')
+    .describe('f', 'The OFX file that will be partitioned')
+    .alias('m', 'max')
+    .describe('m', 'Max entries per partition')
+    .alias('o', 'output')
+    .describe('o', 'The output folder where the partitions will be saved')
     .strict(true)
-    .demandOption(['f'])
+    .demandOption(['f','m'])
     .argv;
 
+banking.parseFile(argv.f, function (content) {
 
-banking.parseFile(argv.f, function (res) {
+    let partitions = partitionMaker.createPartitions(content, parseInt(argv.m));
 
-    var files = [];
-
-    while(res.body.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKTRANLIST.STMTTRN.length > 0) {
-
-        var test = res.body.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKTRANLIST.STMTTRN.splice(0, 20)
-
-        var ofx_string = ofx.serialize(res.header, test);
-
-        files.push(ofx_string);
-
-    }
-
-    async.each(files, function (file, callback) {
-
-        fs.writeFile('testfinal' + files.indexOf(file) + '.ofx', file, function (err) {
-            if (err) {
-                console.log(err);
-            }
-            else {
-                console.log(file + '.json was updated.');
-            }
-    
-            callback();
-        });
-    
-    }, function (err) {
-    
-        if (err) {
-            // One of the iterations produced an error.
-            // All processing will now stop.
-            console.log('A file failed to process');
-        }
-        else {
-            console.log('All files have been processed successfully');
-        }
-    });
+    ofxWriter.createOFXFiles(partitions, argv.o);
 
 });
+
 
 
