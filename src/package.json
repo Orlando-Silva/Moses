@@ -13,7 +13,6 @@
     "async": "^3.1.0",
     "banking": "^1.2.0",
     "ofx": "^0.4.0",
-    "windows-build-tools": "^5.2.2",
     "yargs": "^15.0.2"
   }
 }
